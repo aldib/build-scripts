@@ -5,10 +5,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>eu.triskelionconsulting</groupId>
-  <artifactId>sandbox-bom</artifactId>
+  <artifactId>parent-bom</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>sandbox-bom</name>
+  <name>parent-bom</name>
   <packaging>pom</packaging>
 
   <properties>
@@ -18,11 +18,19 @@
 
     <springboot.version>2.5.1</springboot.version>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
+    <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+    <lombok.version>1.18.20</lombok.version>
 
   </properties>
 
 
   <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -99,7 +107,17 @@
               <groupId>org.mapstruct</groupId>
               <artifactId>mapstruct-processor</artifactId>
               <version>${mapstruct.version}</version>
-            </path>
+            </path>            
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>            
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok-mapstruct-binding</artifactId>
+              <version>${lombok-mapstruct-binding.version}</version>
+            </path>            
           </annotationProcessorPaths>
           <compilerArgs>
             <arg>-XDignore.symbol.file</arg>
@@ -174,7 +192,12 @@
           <artifactId>javax.ws.rs-api</artifactId>
           <version>2.1.1</version>
           <!-- <type>bundle</type> -->
-        </dependency>                
+        </dependency>             
+        <dependency>
+          <groupId>org.postgresql</groupId>
+          <artifactId>r2dbc-postgresql</artifactId>
+          <version>0.9.0.M1</version>
+        </dependency>	           
     </dependencies>
   </dependencyManagement>
 
