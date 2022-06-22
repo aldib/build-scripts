@@ -1,0 +1,4 @@
+[submodule "docker"]
+	path = docker
+	url = git@gitlab.com:alessandro.dibella/provisioning/docker.git
+	branch = main
