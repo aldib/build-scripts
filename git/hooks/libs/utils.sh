@@ -115,6 +115,18 @@ function is_true {
     return ${exit_code}
 }
 
+
+
+# /*!
+#    This function checks if a tool is available. 
+#    First it checks if the variable <TOOL_NAME_IN_CAPITAL_LETTERS>_BIN (e.g. GREP_BIN).
+#    If yes, it verifies the value of the variable points to correct path for the tool.
+#    If not, it look for the tool in the PATH.
+#    @param $1 
+#        the name of the tool
+#    @return 
+#        the path of the tool or an empty string if not found
+#  */
 function find_tool {
     local tool=${1}
     log_debug "Looking for ${tool}"
@@ -123,22 +135,42 @@ function find_tool {
     log_trace "Checking if ${tool_path} is defined"
 
     if [ -v ${tool_path} ]; then
-        local tool_bin=${!tool_path}
-        if [ -f ${tool_bin} ]; then
-            log_debug "Found ${tool_bin} in PATH"
-            echo ${tool_bin}
-        else
-            log_debug "${tool_bin} not found"
-            return 1
-        fi
+        log_trace "${tool_path} is defined, and its value is ${!tool_path}"
+        tool=${!tool_path}
     else
         log_trace "${tool_path} is not defined, checking PATH" 
-        if command -v ${tool} &> /dev/null; then
-            log_debug "Found ${tool} in PATH"
-            echo ${tool}
-        else
-            log_debug "${tool} not found in PATH"
-            return 1
-        fi
     fi
+
+    command -v -- ${tool} || echo ""
+}
+
+
+function is_feature {
+    local exit_code=1 
+    
+    local flag="${1^^}_HOOKS"
+    local expected_state=${2^^}
+
+    case ${expected_state} in
+        DISABLED|ENABLED|ENFORCED)
+            # check if the flag variable is set
+            if [ -v ${flag} ]; then 
+                local current_state=${!flag}
+                log_trace "Flag ${flag} is ${current_state^^}"
+            fi
+            if [ -v current_state ]; then 
+                shopt -s nocasematch
+                if [[ "${expected_state}" = "${current_state}" ]]; then   # they match
+                    exit_code=0
+                elif [[ "${expected_state}" = "ENABLED" && "${current_state}" = "ENFORCED" ]]; then   # they match
+                    exit_code=0
+                fi
+                shopt -u nocasematch
+            fi
+            ;;
+        *)
+            log_error "${2^^} is not a valid value. Only DISABLED, ENABLED or ENFORCED are supported"
+    esac
+
+    return ${exit_code}
 }

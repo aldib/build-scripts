@@ -8,12 +8,15 @@ set -o nounset
 set -o pipefail
 
 LIBS_DIR=${LIBS_DIR:-$(dirname $0)}
+TFLINT_CONFIG=${TFLINT_CONFIG:-$(dirname $0)/.tflint.hcl}
 
-REQUIRED_TOOLS="terraform tflint"
 
-TFLINT_BIN=/home/tflint
+source ${LIBS_DIR}/base_handler.sh --required-tools tflint --feature-flag terraform --file-filters 'tf$,tfvars$'  -- $@
 
-source ${LIBS_DIR}/base_handler.sh
+${TFLINT_BIN} --chdir=${PROJECT_DIR} --config=${TFLINT_CONFIG} --init
 
-log_info "test"
+for file in $changed_files; do
+    log_info "Linting ${file}"
+    ${TFLINT_BIN} --config=${TFLINT_CONFIG} --filter ${file}
+done
 

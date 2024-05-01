@@ -1,0 +1,3 @@
+GIT_HOOK_LOG_LEVEL=info
+TERRAFORM_HOOKS=enabled
+#export TFLINT_LOG=debug

@@ -7,9 +7,16 @@ set -o nounset
 # The exit status of the last command that threw a non-zero exit code is returned.
 set -o pipefail
 
+HOOKS_DIR=$(git config core.hooksPath)
+if [ -z "${HOOKS_DIR}" ]; then
+    HOOKS_DIR=$(dirname $0)
+fi
+
 LIBS_DIR=${LIBS_DIR:-$(dirname $0)/libs}
 
-source ${LIBS_DIR}/base_hook.sh ${0##*/} # script name
+PROJECT_DIR=$(pwd)
+
+source ${LIBS_DIR}/base_hook.sh "pre-commit" 
 
 
 

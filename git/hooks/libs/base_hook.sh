@@ -1,24 +1,31 @@
-# exit when a command fails.
-set -o errexit
-# exit when your script tries to use undeclared variables.
-set -o nounset
-# The exit status of the last command that threw a non-zero exit code is returned.
-set -o pipefail
-
 LIBS_DIR=${LIBS_DIR:-$(dirname $0)}
+PROJECT_DIR=${PROJECT_DIR:-$(pwd)}
+CONFIG_FILE=${GITHOOKS_CONFIG:-${PROJECT_DIR}/.githooks.rc}
 
 source ${LIBS_DIR}/utils.sh
 
-
-if ! is_true "GIT_HOOKS_ENABLED" 1; then
+if [ -f ${CONFIG_FILE} ]; then
+    log_debug "Loading configuration file ${CONFIG_FILE}"
+    source ${CONFIG_FILE}
+else
+    log_debug "Configuration file ${CONFIG_FILE} not found. Exiting."
     exit 0
 fi
 
 hook_type=${1}
+shift
 
-handlers_dir=${PWD}/${hook_type}-handlers
+handlers_dir=${HOOKS_DIR}/${hook_type}-handlers
 
-log_info "Running scripts in ${handlers_dir}"
+log_info "Running scripts in ${handlers_dir} with paramters $@"
+
+if [[ $# -gt 0 ]] ; then
+    log_debug "Using the list of changed files that was passed explicitly"
+    changed_files=$@
+else
+    log_debug "Using git diff to find the list of changed files"
+    changed_files=$(git diff --name-only --cached --diff-filter=ACMR)
+fi
 
 for script in ${handlers_dir}/*.sh; do
     script_name=$(basename ${script})
@@ -29,6 +36,22 @@ for script in ${handlers_dir}/*.sh; do
         chmod u+x ${script}
     fi
 
+    set +o errexit
+    env -i \
+        HOME=${HOME} \
+        PROJECT_DIR=${PROJECT_DIR} \
+        LIBS_DIR=${LIBS_DIR} \
+        CONFIG_FILE=${CONFIG_FILE} \
+        ${script} \
+        ${changed_files};
+    script_exit_code=${?}
+    set -o errexit
 
-    exec -c -a ${script_name} env LIBS_DIR=${LIBS_DIR} env GIT_HOOK_LOG_LEVEL=${GIT_HOOK_LOG_LEVEL:-INFO} ${script}
+    if [ ${script_exit_code} -ne 0 ]; then
+        log_error "${script} failed with error ${script_exit_code}"
+        exit -1
+    else
+        log_error "${script} completed successfully"
+    fi
+    
 done
